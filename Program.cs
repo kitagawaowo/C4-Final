@@ -27,26 +27,33 @@ namespace c4_model_design
             // 1. Context Diagram
             SoftwareSystem enlazador = model.AddSoftwareSystem("SASpe", "Sistema de Alerta de Sismos peruano SASpe");
             SoftwareSystem sismate = model.AddSoftwareSystem("SISMATE", "Permite el envío de sms de alerta celular");
+            SoftwareSystem coen = model.AddSoftwareSystem("COEN", "Centro de Operaciones de Emergencia Nacional");
             SoftwareSystem indeci = model.AddSoftwareSystem("INDECI", "Permite analizar y organizar el tratamiento de riesgo de siniestro");
             
+            Person opRegional = model.AddPerson("Operador Regional", "Operador Regional");
+            Person opNacional = model.AddPerson("Operador Nacional", "Operador Nacional");
             Person usuario = model.AddPerson("Usuario", "Usuario de la aplicación");
             
 
-            //Person Administrador = model.AddPerson("Administrador", "Persona encargada de administrar el sistema");
 
             usuario.Uses(enlazador, "Revisa los reportes de sismos y las alertas de tsunami dispuestas");
-           // Administrador.Uses(enlazador, "Administra el sistema");
+            opNacional.Uses(enlazador, "Envía alertas de tsunami");
+            opRegional.Uses(enlazador, "Envía alertas de sismos");
 
+            enlazador.Uses(indeci, "Envía reportes de sismos");
             enlazador.Uses(sismate, "Envía alertas de sismos");
-            enlazador.Uses(indeci, "Envía alertas de tsunami");
+            enlazador.Uses(coen, "Envía alertas de tsunami");
 
             // Tags
             
             //Administrador.AddTags("Administrador");
             enlazador.AddTags("SASpe");
             sismate.AddTags("SISMATE");
+            coen.AddTags("COEN");
             indeci.AddTags("INDECI");
             usuario.AddTags("Usuario");
+            opRegional.AddTags("Operador Regional");
+            opNacional.AddTags("Operador Nacional");
 
             Styles styles = viewSet.Configuration.Styles;
             styles.Add(new ElementStyle(Tags.Person) { Shape = Shape.Person });
@@ -55,93 +62,72 @@ namespace c4_model_design
             styles.Add(new ElementStyle(Tags.Component) { Background = "#85bbf0", Color = "#ffffff" });
             
             styles.Add((new ElementStyle("Usuario") { Background = "#438dd5", Color = "#ffffff", Shape = Shape.Person }));
+            styles.Add((new ElementStyle("Operador Regional") { Background = "#438dd5", Color = "#ffffff", Shape = Shape.Person }));
+            styles.Add((new ElementStyle("Operador Nacional") { Background = "#438dd5", Color = "#ffffff", Shape = Shape.Person }));
             styles.Add((new ElementStyle("SASpe") { Background = "#438dd5", Color = "#ffffff", Shape = Shape.RoundedBox }));
             styles.Add((new ElementStyle("SISMATE") { Background = "#438dd5", Color = "#ffffff", Shape = Shape.RoundedBox }));
+            styles.Add((new ElementStyle("COEN") { Background = "#438dd5", Color = "#ffffff", Shape = Shape.RoundedBox }));
             styles.Add((new ElementStyle("INDECI") { Background = "#438dd5", Color = "#ffffff", Shape = Shape.RoundedBox }));
 
             SystemContextView contextView = viewSet.CreateSystemContextView(enlazador, "Context", "Context Diagram");
             contextView.PaperSize = PaperSize.A4_Landscape;
             contextView.AddAllSoftwareSystems();
             contextView.AddAllPeople();
-
-            /*
-            // 2. Diagrama de Contenedores
-            Container mobileApplication = enlazador.AddContainer("Mobile App", "Permite a los usuarios ver sus próximas citas, tratar sus problemas de salud mental, y editar sus datos", "Swift UI");
-            Container landingPage = enlazador.AddContainer("Landing Page", "", "React");
-            Container apiRest = enlazador.AddContainer("API REST", "API Rest", "NodeJS (NestJS) port 8080");
-
-            Container PaymentContext = enlazador.AddContainer("Payment Context", "Bounded Context de cobro y pago de la aplicación, para que los pacientes agenden citas", "NodeJS (NestJS)");
-            Container AppointmentContext = enlazador.AddContainer("Appointment Context", "Bounded Context de citas de psicólogos y pacientes", "NodeJS (NestJS)");
-            Container ChatBotContext = enlazador.AddContainer("Chatbot Context", "Bounded Context de Chatbot con el paciente", "NodeJS (NestJS)");
-            Container AccountContext = enlazador.AddContainer("Account Context", "Bounded Context de Cuentas de la aplicación", "NodeJS (NestJS)");
-            Container MentalHealthContext = enlazador.AddContainer("Mental Health Diagnosis Context", "Bounded Context de diagnósticos de salud mental", "NodeJS (NestJS)");
-            Container GroupsContext = enlazador.AddContainer("Mental Care Groups Context", "Bounded Context de grupos de pacientes con enfermedades mentales", "NodeJS (NestJS)");
-
-            Container database = enlazador.AddContainer("Database", "", "SQL");
-
-            Paciente.Uses(mobileApplication, "Consulta");
-            Paciente.Uses(landingPage, "Consulta");
-
-            Psicologo.Uses(mobileApplication, "Consulta");
-            Psicologo.Uses(landingPage, "Consulta");
-
-            Administrador.Uses(mobileApplication, "Consulta");
-            Administrador.Uses(landingPage, "Consulta");
-
+            
+            // 2. Container Diagram
+            Container webApplication = enlazador.AddContainer("Web Application", "Permite al usuario revisar los reportes de sismos y las alertas de tsunami dispuestas", "ASP.NET Core MVC");
+            Container mobileApplication = enlazador.AddContainer("Mobile Application", "Permite al usuario revisar los reportes de sismos y las alertas de tsunami dispuestas", "Xamarin");
+            Container apiRest = enlazador.AddContainer("API Rest", "Permite al usuario revisar los reportes de sismos y las alertas de tsunami dispuestas", "ASP.NET Core Web API");
+            Container igpLima = enlazador.AddContainer("IGP Lima", "Se encarga de recolectar los mensajes", "ASP.NET Core Web API");
+            
+            Container earthquakeContext = enlazador.AddContainer("Earthquake Context", "Bounded Context de deteccion de sismos", "INDECI");
+            Container messageContext= enlazador.AddContainer("Message Processor", "Bounded Context donde se procesa el envio de mensajes", "INDECI");
+            
+            Container database = enlazador.AddContainer("Database", "Almacena los datos de los reportes de sismos y las alertas de tsunami dispuestas", "MongoDB");
+            
+            usuario.Uses(webApplication, "Revisa los reportes de sismos y las alertas de tsunami dispuestas");
+            usuario.Uses(mobileApplication, "Revisa los reportes de sismos y las alertas de tsunami dispuestas");
+            
+            
             mobileApplication.Uses(apiRest, "API Request", "JSON/HTTPS");
-
-            apiRest.Uses(PaymentContext, "", "");
-            apiRest.Uses(AppointmentContext, "", "");
-            apiRest.Uses(ChatBotContext, "", "");
-            apiRest.Uses(AccountContext, "", "");
-            apiRest.Uses(MentalHealthContext, "", "");
-            apiRest.Uses(GroupsContext, "", "");
-
-            PaymentContext.Uses(database, "", "");
-            AppointmentContext.Uses(database, "", "");
-            ChatBotContext.Uses(database, "", "");
-            AccountContext.Uses(database, "", "");
-            MentalHealthContext.Uses(database, "", "");
-            GroupsContext.Uses(database, "", "");
-
-            PaymentContext.Uses(Yape, "API Request", "JSON/HTTPS");
-            PaymentContext.Uses(Plin, "API Request", "JSON/HTTPS");
-            PaymentContext.Uses(Tunki, "API Request", "JSON/HTTPS");
-            PaymentContext.Uses(Visa, "API Request", "JSON/HTTPS");
-
-            AppointmentContext.Uses(GoogleMeet, "API Request", "JSON/HTTPS");
-            AppointmentContext.Uses(GoogleCalendar, "API Request", "JSON/HTTPS");
-
-            ChatBotContext.Uses(ChatBot, "API Request", "JSON/HTTPS");
-
-            AccountContext.Uses(GoogleAccount, "API Request", "JSON/HTTPS");
-
-
+            webApplication.Uses(apiRest, "API Request", "JSON/HTTPS");
+            apiRest.Uses(database, "Reads from and writes to", "MongoDB");
+            apiRest.Uses(earthquakeContext, "Envía alertas de sismos");
+            apiRest.Uses(messageContext, "Envía alertas de sismos");
+            
+            earthquakeContext.Uses(database, "Reads from and writes to", "MongoDB");
+            messageContext.Uses(database, "Reads from and writes to", "MongoDB");
+            
+            messageContext.Uses(sismate, "Envía alertas de sismos", "SMS");
+            earthquakeContext.Uses(indeci, "Envía informacion para analizar y organizar el tratamiento de riesgo de siniestro", "Dedicated Internet line");
+            
             // Tags
-            mobileApplication.AddTags("MobileApp");
-            landingPage.AddTags("LandingPage");
-            apiRest.AddTags("APIRest");
+            webApplication.AddTags("Web Application");
+            mobileApplication.AddTags("Mobile Application");
+            apiRest.AddTags("API Rest");
+            earthquakeContext.AddTags("Earthquake Context");
+            messageContext.AddTags("Message Processor");
             database.AddTags("Database");
-
             string contextTag = "Context";
-
-            PaymentContext.AddTags(contextTag);
-            AppointmentContext.AddTags(contextTag);
-            ChatBotContext.AddTags(contextTag);
-            AccountContext.AddTags(contextTag);
-            MentalHealthContext.AddTags(contextTag);
-            GroupsContext.AddTags(contextTag);
-
-            styles.Add(new ElementStyle("MobileApp") { Background = "#9d33d6", Color = "#ffffff", Shape = Shape.MobileDevicePortrait, Icon = "" });
-            styles.Add(new ElementStyle("LandingPage") { Background = "#929000", Color = "#ffffff", Shape = Shape.WebBrowser, Icon = "" });
-            styles.Add(new ElementStyle("APIRest") { Shape = Shape.RoundedBox, Background = "#0000ff", Color = "#ffffff", Icon = "" });
-            styles.Add(new ElementStyle("Database") { Shape = Shape.Cylinder, Background = "#ff0000", Color = "#ffffff", Icon = "" });
+            styles.Add((new ElementStyle("Web Application") { Background = "#438dd5", Color = "#ffffff", Shape = Shape.WebBrowser}));
+            styles.Add((new ElementStyle("Mobile Application") { Background = "#438dd5", Color = "#ffffff", Shape = Shape.MobileDevicePortrait}));
+            styles.Add((new ElementStyle("API Rest") { Background = "#438dd5", Color = "#ffffff", Shape = Shape.RoundedBox }));
+            styles.Add((new ElementStyle("Earthquake Context") { Background = "#438dd5", Color = "#ffffff", Shape = Shape.Hexagon}));
+            styles.Add((new ElementStyle("Message Processor") { Background = "#438dd5", Color = "#ffffff", Shape = Shape.Hexagon}));
+            styles.Add((new ElementStyle("Database") { Background = "#438dd5", Color = "#ffffff", Shape = Shape.Cylinder}));
             styles.Add(new ElementStyle(contextTag) { Shape = Shape.Hexagon, Background = "#facc2e", Icon = "" });
-
+            
+            
             ContainerView containerView = viewSet.CreateContainerView(enlazador, "Contenedor", "Diagrama de contenedores");
             contextView.PaperSize = PaperSize.A4_Landscape;
             containerView.AddAllElements();
             
+            /* 3. Component Diagram
+            Component webApplicationController = webApplication.AddComponent("Web Application Controller", "Maneja las solicitudes HTTP", "ASP.NET Core MVC");
+            Component webApplicationView = webApplication.AddComponent("Web Application View", "Maneja las solicitudes HTTP", "ASP.NET Core MVC");
+            Component webApplicationModel = webApplication.AddComponent("Web Application Model", "Maneja las solicitudes HTTP", "ASP.NET Core MVC");
+            
+            /* 
             // 3.1. Diagrama de Componentes (Account Context)
             Component accountController = AccountContext.AddComponent("Account Controller", "Controlador de Cuentas de Usuario.", "NodeJS (NestJS) REST Controller");
            
